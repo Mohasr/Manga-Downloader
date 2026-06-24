@@ -1,0 +1,31 @@
+# Example configuration file for Manga Downloader
+# Copy this file to config.toml and customize as needed
+
+[download]
+concurrent_downloads = 5       # Number of simultaneous downloads
+max_retries = 5                # Maximum retry attempts per image
+retry_delay = 2.0              # Delay between retries (seconds)
+request_timeout = 60           # HTTP request timeout (seconds)
+chunk_size = 8192              # Download chunk size (bytes)
+resume_downloads = true        # Skip already-downloaded images
+
+[export]
+pdf_quality = 95               # JPEG quality in PDF (1-100)
+pdf_max_image_size = 100000000 # Max pixels before downscaling
+cbz_compression = 8            # ZIP_DEFLATED compression level
+skip_corrupted_images = true   # Skip corrupted images in PDF
+
+[browser]
+headless = false               # Run Chrome in headless mode
+chrome_channel = "chrome"      # Chrome channel (chrome, chromium, msedge)
+viewport_width = 1920
+viewport_height = 1080
+timeout = 120000               # Navigation timeout (milliseconds)
+
+[general]
+profile_dir = "browser_profile"  # Chrome profile directory
+progress_file = "progress.json"  # Download progress tracking
+download_dir = "downloads"       # Output directory for downloads
+cache_dir = "cache"              # Cache directory
+default_output_format = "cbz"    # cbz, pdf, or both
+log_level = "INFO"
