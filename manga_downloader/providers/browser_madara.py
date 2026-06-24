@@ -81,10 +81,7 @@ class BrowserMadaraProvider(BaseMangaProvider):
             user_data_dir=profile_path,
             channel=self.config.browser.chrome_channel,
             headless=self.config.browser.headless,
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--window-position=-32000,-32000",
-            ],
+            args=["--disable-blink-features=AutomationControlled"],
             viewport={
                 "width": self.config.browser.viewport_width,
                 "height": self.config.browser.viewport_height,

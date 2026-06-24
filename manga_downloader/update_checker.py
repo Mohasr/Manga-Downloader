@@ -47,7 +47,7 @@ class UpdateChecker:
         self._context = await self._playwright.chromium.launch_persistent_context(
             user_data_dir=str(self._profile),
             channel="chrome", headless=False,
-            args=["--disable-blink-features=AutomationControlled", "--window-position=-32000,-32000"],
+            args=["--disable-blink-features=AutomationControlled"],
         )
 
     async def check_all(self) -> list[UpdateResult]:
