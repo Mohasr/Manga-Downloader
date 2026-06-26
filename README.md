@@ -22,8 +22,9 @@ Downloads manga chapters and exports them to CBZ (Comic Book ZIP) and PDF format
 
 - **Manga Starz** (manga-starz.net)
 - **Lek Manga** (lek-manga.net)
-- Any Madara theme WordPress site (config-driven extensibility)
-
+- **rocks manga** (rocksmanga.com)
+- **3asq** (3asq.org)
+  
 ## Installation
 
 ### Requirements
