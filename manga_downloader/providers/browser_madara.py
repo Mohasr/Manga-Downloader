@@ -56,6 +56,21 @@ class BrowserMadaraProvider(BaseMangaProvider):
             "image_container_selector": ".read-container, .reading-content, .image-list",
             "image_selector": "img",
         },
+        "rocksmanga.com": {
+            "name": "Rocks Manga",
+            "chapter_element_selector": "a[href*='/manga/']",
+            "title_selector": "h1",
+            "image_container_selector": "main, .entry-content, article, .reading-content, .read-container, .image-list",
+            "image_selector": "img",
+            "use_style_list": False,   # rocksmanga doesn't support ?style=list
+        },
+        "3asq.org": {
+            "name": "3asq",
+            "chapter_element_selector": ".wp-manga-chapter a",
+            "title_selector": "h1, .post-title h1, .post-title h3",
+            "image_container_selector": ".read-container, .reading-content, .image-list",
+            "image_selector": "img",
+        },
     }
 
     def __init__(self, config: AppConfig | None = None, debug: bool = False) -> None:
@@ -91,6 +106,19 @@ class BrowserMadaraProvider(BaseMangaProvider):
         await self._page.add_init_script(
             "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });"
         )
+
+        # Minimize browser window via CDP
+        try:
+            cdp = await self._context.new_cdp_session(self._page)
+            winfo = await cdp.send("Browser.getWindowForTarget")
+            if winfo.get("windowId"):
+                await cdp.send("Browser.setWindowBounds", {
+                    "windowId": winfo["windowId"],
+                    "bounds": {"windowState": "minimized"}
+                })
+            await cdp.detach()
+        except Exception:
+            pass
 
         # Session manager for non-CF requests (Ajax, static CDN)
         self.session_mgr = SessionManager(
@@ -154,13 +182,21 @@ class BrowserMadaraProvider(BaseMangaProvider):
 
         # Chapters
         chapters: list[Chapter] = []
+        seen_urls: set[str] = set()
         for el in soup.select(self._site_config["chapter_element_selector"]):
             href = el.get("href", "")
             if not href or "javascript" in href:
                 continue
+            # Skip duplicate URLs and non-chapter links
+            if href in seen_urls:
+                continue
             text = el.get_text(strip=True)
             num = self._parse_chapter_number(text, href)
+            if num == 0.0 and "/manga/" in href and href.rstrip("/").rsplit("/", 1)[-1] == self._manga_slug:
+                # This is the manga page itself, not a chapter
+                continue
             ch_slug = href.rstrip("/").rsplit("/", 1)[-1]
+            seen_urls.add(href)
             chapters.append(Chapter(number=num, title=text or f"Chapter {num}",
                                     url=href, slug=ch_slug))
 
@@ -199,7 +235,7 @@ class BrowserMadaraProvider(BaseMangaProvider):
 
         # Build chapter URL
         ch_url = chapter.url
-        if "?style=list" not in ch_url:
+        if self._site_config.get("use_style_list", True) and "?style=list" not in ch_url:
             ch_url += "?style=list"
 
         # CDP session for capturing images via Network.loadingFinished
@@ -224,7 +260,11 @@ class BrowserMadaraProvider(BaseMangaProvider):
                 return
             if not any(url.lower().endswith(e) for e in [".jpg", ".jpeg", ".png", ".webp"]):
                 return
-            if not any(domain in url for domain in self.SITE_DOMAINS) and "s2manhwa" not in url:
+            # Accept images from: site domains, s2manhwa CDN, or wp-content/uploads path
+            in_domain = any(domain in url for domain in self.SITE_DOMAINS)
+            in_cdn = "s2manhwa" in url
+            in_uploads = "/wp-content/uploads/" in url or "/WP-manga/" in url
+            if not (in_domain or in_cdn or in_uploads):
                 return
 
             async def get():
@@ -255,11 +295,25 @@ class BrowserMadaraProvider(BaseMangaProvider):
         # Navigate to chapter
         await self._page.goto(ch_url, wait_until="load", timeout=30000)
         await asyncio.sleep(2)
-        # Scroll to trigger lazy loads
-        for i in range(15):
+        # Force-load all lazy images via JavaScript + aggressive scrolling
+        await self._page.evaluate("""
+            () => {
+                // Force all data-src to src
+                document.querySelectorAll('img[data-src]').forEach(img => {
+                    img.src = img.getAttribute('data-src');
+                });
+                document.querySelectorAll('img[data-lazy-src]').forEach(img => {
+                    img.src = img.getAttribute('data-lazy-src');
+                });
+            }
+        """)
+        await asyncio.sleep(1)
+        # Scroll to trigger lazy-load listeners
+        for i in range(40):
             await self._page.evaluate(f"window.scrollTo(0, {(i+1)*800})")
-            await asyncio.sleep(0.3)
-        await asyncio.sleep(3)
+            await asyncio.sleep(0.15)
+        await self._page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        await asyncio.sleep(5)
 
         if pending:
             await asyncio.gather(*pending)

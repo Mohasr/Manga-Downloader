@@ -22,9 +22,8 @@ Downloads manga chapters and exports them to CBZ (Comic Book ZIP) and PDF format
 
 - **Manga Starz** (manga-starz.net)
 - **Lek Manga** (lek-manga.net)
-- **rocks manga** (rocksmanga.com)
-- **3asq** (3asq.org)
-  
+- Any Madara theme WordPress site (config-driven extensibility)
+
 ## Installation
 
 ### Requirements
@@ -92,33 +91,6 @@ manga_downloader/
 ├── cli.py              # Command-line interface
 └── main.py             # Entry point
 ```
-## Windows Download
-
-Download the latest release from:
-
-https://github.com/Mohasr/Manga-Downloader/releases
-
-### First Run
-
-1. Extract the ZIP.
-2. Run MangaDownloader.exe.
-3. If Cloudflare verification is required, run setup_cookies.py once.
-4. Enjoy.
-
-## ScreenShots
-
-1- The main menu 
-
-<img width="366" height="353" alt="Screenshot 2026-06-24 170629" src="https://github.com/user-attachments/assets/56b446e7-7d42-4285-94d4-dc09d7a1aa53" />
-
-2- Search menu
-
-<img width="485" height="382" alt="Screenshot 2026-06-24 170709" src="https://github.com/user-attachments/assets/7b2bbbc7-96ba-491d-bdb1-f98f98517d85" />
-
-3- Followed Manga menu
-
-<img width="344" height="131" alt="Screenshot 2026-06-24 170758" src="https://github.com/user-attachments/assets/54c54329-9079-458b-8684-8f4db1397310" />
-
 
 ## Troubleshooting
 

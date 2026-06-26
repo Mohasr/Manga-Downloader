@@ -101,21 +101,34 @@ class MenuSystem:
     def _paginated_search(self, query: str, all_results: list) -> tuple[str | None, str]:
         providers = sorted(set(r.site for r in all_results))
         active_filter = "All"
+        local_filter = ""  # type-to-filter within results
         page = 0
         page_size = 10
 
         while True:
             _clear()
+            # Apply both provider filter and local text filter
             filtered = all_results if active_filter == "All" else [r for r in all_results if r.site == active_filter]
+            if local_filter:
+                lf = local_filter.lower()
+                filtered = [r for r in filtered if lf in r.title.lower()]
+
             total_pages = max(1, (len(filtered) + page_size - 1) // page_size)
             start = page * page_size
             end = min(start + page_size, len(filtered))
             page_items = filtered[start:end]
 
-            console.print(f"\n  [bold cyan]Results for '{query}'[/bold cyan]")
+            title = f"Results for '{query}'"
+            if local_filter:
+                title += f"  [dim]filter: '{local_filter}'[/dim]"
+
+            console.print(f"\n  [bold cyan]{title}[/bold cyan]")
             console.print(f"  [dim]Filter: {active_filter}  |  Page {page+1}/{total_pages}  |  {len(filtered)} results[/dim]")
-            console.print(f"  [dim]F=filter  N=next page  P=prev page  0=cancel[/dim]")
+            console.print(f"  [dim]F=provider filter  N/P=pages  type to filter  0=cancel[/dim]")
             console.print()
+
+            if not page_items:
+                console.print("  [dim]No results match the filter. Press Backspace to clear.[/dim]")
 
             for i, r in enumerate(page_items, start + 1):
                 console.print(f"  [bold cyan]{i:2d}.[/bold cyan] {r.title[:55]} [dim]({r.site})[/dim]")
@@ -124,11 +137,13 @@ class MenuSystem:
             if len(filtered) > end:
                 console.print(f"  [dim]Press N for next page — {len(filtered) - end} more results[/dim]")
 
-            choice = _input("Select or action:").strip().lower()
-            if choice == "0": return None, "cancel"
-            elif choice == "n" and page < total_pages - 1: page += 1
-            elif choice == "p" and page > 0: page -= 1
-            elif choice == "f":
+            choice = _input("Select or action:").strip()
+            cl = choice.lower()
+
+            if cl == "0": return None, "cancel"
+            elif cl == "n" and page < total_pages - 1: page += 1
+            elif cl == "p" and page > 0: page -= 1
+            elif cl == "f":
                 _clear()
                 console.print("\n  [bold cyan]Filter by Provider[/bold cyan]")
                 console.print(f"  0. All ({len(all_results)} results)")
@@ -142,6 +157,14 @@ class MenuSystem:
                         idx = int(f_choice)
                         if 1 <= idx <= len(providers): active_filter = providers[idx - 1]
                     except ValueError: pass
+                page = 0
+            elif len(choice) == 1 and choice.isalpha() or len(choice) > 1 and not choice.isdigit():
+                # User is typing to filter — update local filter
+                local_filter = choice
+                page = 0
+            elif choice == "":
+                # Empty = clear local filter
+                local_filter = ""
                 page = 0
             else:
                 try:

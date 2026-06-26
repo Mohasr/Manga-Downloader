@@ -28,6 +28,14 @@ SITES: dict[str, dict[str, Any]] = {
         "name": "Lek Manga",
         "url": "https://lek-manga.net",
     },
+    "rocksmanga.com": {
+        "name": "Rocks Manga",
+        "url": "https://rocksmanga.com",
+    },
+    "3asq.org": {
+        "name": "3asq",
+        "url": "https://3asq.org",
+    },
 }
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/149.0.0.0 Safari/537.36"
